@@ -1,0 +1,1 @@
+ACTION=="add|change", SUBSYSTEM=="usb", ATTRS{idVendor}=="1050", ATTRS{idProduct}=="0407", RUN+="/usr/local/bin/clean-card-private-keys -u CHANGEME"

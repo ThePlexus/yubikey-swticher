@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+/*
+ * (C) Copyright ${year} Nuxeo (http://nuxeo.com/) and others.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributors:
+ *     Simon Newton simon@simonnewton.com / http://github.com/ThePlexus
+ */
+
+set -e
+user=
+
+get_args() {
+  while getopts "u:" opt; do
+    case "$opt" in
+      u) user=$OPTARG;;
+    esac
+  done
+
+  if [[ ! -z "$user" ]]; then
+    if ! id -u "$user"; then
+      exit 1
+    fi
+  fi
+}
+
+swap_card_private_keys() {
+  if [[ "$user" == "" ]]; then
+    keygrips=$(
+      gpg-connect-agent 'keyinfo --list' /bye 2>/dev/null | grep -v OK | awk '{if ($4 == "T") { print $3 ".key" }}')
+    for f in $keygrips; do
+      rm -v ~/.gnupg/private-keys-v1.d/$f
+    done
+    gpg --card-status 2>/dev/null 1>/dev/null
+  else
+    echo ${BASH_SOURCE[0]}
+    su "$user" -c "${BASH_SOURCE[0]}"
+  fi
+}
+
+main() {
+  get_args $*
+  swap_card_private_keys "$user"
+}
+
+main $*
